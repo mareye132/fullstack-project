@@ -1,0 +1,18 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f6f8;
+}
+
+.store-title {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.footer {
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  background-color: #f4f6f8;
+  margin-top: 30px;
+}
