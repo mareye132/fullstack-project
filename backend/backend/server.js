@@ -1,98 +1,45 @@
-const express = require("express");
-const cors = require("cors");
-const { Pool } = require("pg");
+// Import required modules
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
 
+// Create an Express application
 const app = express();
-const port = 5000;
 
-// PostgreSQL database connection setup
-const pool = new Pool({
-  user: "postgres", // Replace with your PostgreSQL username
-  host: "localhost",
-  database: "store_db", // Replace with your database name
-  password: "Maru@132", // Replace with your PostgreSQL password
-  port: 5432,
-});
-
-// Middleware
+// Enable CORS
 app.use(cors());
-app.use(express.json());
 
-// Get All Products
-app.get("/api/products", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM store_product");
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({ message: "Error fetching products" });
-  }
+// Middleware to parse JSON request bodies
+app.use(bodyParser.json());
+
+// Example in-memory product database
+let products = [
+  { id: 1, name: 'Product 1', price: '100' },
+  { id: 2, name: 'Product 2', price: '200' }
+];
+
+// ✅ GET all products
+app.get('/api/products', (req, res) => {
+  res.status(200).json(products);
 });
 
-// Add a New Product
-app.post("/api/products", async (req, res) => {
-  const { name, price, description } = req.body;
+// ✅ POST a new product
+app.post('/api/products', (req, res) => {
+  const { name, price } = req.body;
 
-  if (!name || !price || !description) {
-    return res.status(400).json({ message: "All fields are required!" });
+  if (!name || !price) {
+    return res.status(400).json({ error: 'Name and price are required' });
   }
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO store_product (name, price, description) VALUES ($1, $2, $3) RETURNING *",
-      [name, price, description]
-    );
-    res.status(201).json(result.rows[0]); // Return the newly added product
-  } catch (error) {
-    console.error("Error adding product:", error);
-    res.status(500).json({ message: "Error adding product" });
-  }
+  const newProduct = { id: Date.now(), name, price };
+  products.push(newProduct);
+
+  res.status(201).json(newProduct);
 });
 
-// Update a Product by ID
-app.put("/api/products/:id", async (req, res) => {
-  const { id } = req.params;
-  const { name, price, description } = req.body;
+// ✅ Use Vercel's port
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-  if (!name || !price || !description) {
-    return res.status(400).json({ message: "All fields are required for update!" });
-  }
-
-  try {
-    const result = await pool.query(
-      "UPDATE store_product SET name = $1, price = $2, description = $3 WHERE id = $4 RETURNING *",
-      [name, price, description, id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    res.json({ message: "Product updated successfully", product: result.rows[0] });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: "Error updating product" });
-  }
-});
-
-// Delete a Product by ID
-app.delete("/api/products/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const result = await pool.query("DELETE FROM store_product WHERE id = $1 RETURNING *", [id]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    res.json({ message: "Product deleted successfully", deletedProduct: result.rows[0] });
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    res.status(500).json({ message: "Error deleting product" });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// ✅ Export the Express app (Required for Vercel)
+module.exports = app;

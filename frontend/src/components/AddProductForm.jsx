@@ -1,33 +1,63 @@
-import React, { useState } from "react";
-import { CircularProgress, Box, Typography } from "@mui/material";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AddProductForm = ({ addProduct }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [productName, setProductName] = useState('');
+  const [productPrice, setProductPrice] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "2rem", // Adjust padding if needed
-        maxWidth: "500px",
-        margin: "0 auto",
-        backgroundColor: "#fff", // Background color for the form
-      }}
-    >
-      {/* Error Message */}
-      {error && (
-        <Typography variant="body2" color="error" sx={{ marginBottom: "1rem" }}>
-          {error}
-        </Typography>
-      )}
+  const handleAddProduct = async (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setError('');
 
-      {/* Optionally, you can show loading state */}
-      {loading && <CircularProgress size={24} color="inherit" />}
-    </Box>
-  );
+    if (!productName.trim() || !productPrice.trim()) {
+      setError('Please enter both product name and price.');
+      return;
+    }
+
+    if (isNaN(productPrice) || Number(productPrice) <= 0) {
+      setError('Price must be a positive number.');
+      return;
+    }
+
+    try {
+      const newProduct = { name: productName, price: parseFloat(productPrice) };
+
+      if (typeof addProduct !== 'function') {
+        setError('Product addition function is not available.');
+        return;
+      }
+
+      // Updated API URL with trailing slash to prevent Django redirection issue
+      const response = await fetch("http://localhost:8000/api/products/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.json();
+        throw new Error(errorMessage.detail || "Failed to add product");
+      }
+
+      setProductName('');
+      setProductPrice('');
+
+      // Optionally call addProduct to update state
+      addProduct(newProduct);
+
+      // Navigate after a short delay
+      setTimeout(() => navigate('/new-add-products'), 500);
+    } catch (error) {
+      console.error('Error adding product:', error);
+      setError(error.message || 'Error adding product. Please try again.');
+    }
+  };
+
+    
 };
 
 export default AddProductForm;
