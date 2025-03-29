@@ -1,0 +1,18 @@
+# Ignore the virtual environment
+venv/
+
+# Ignore frontend dependencies and build files
+frontend/node_modules/
+frontend/public/
+frontend/dist/
+frontend/.vercel/
+frontend/eslint.config.js
+frontend/vite.config.js
+
+# Ignore backend dependencies, build files, and database
+backend/node_modules/
+backend/.vercel/
+backend/store/migrations/
+backend/store/__pycache__/
+backend/db.sqlite3
+backend/backend/__pycache__/
